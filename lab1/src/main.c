@@ -14,6 +14,7 @@
 #define LED_GREEN PB5   // PB5 is AVR pin where green on-board LED 
 #define LED_EXT PB0 // is connected
 #define SHORT_DELAY 250 // Delay in milliseconds
+#define tdit 60 //čas tečky [ms]
 #ifndef F_CPU
 # define F_CPU 16000000 // CPU frequency in Hz required for delay funcs
 #endif
@@ -49,22 +50,131 @@ int main(void)
     // Infinite loop
     while (1)
     {
-        // Pause several milliseconds
-        _delay_ms(SHORT_DELAY);
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(3*tdit);
+        //dah
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(3*tdit);
+        //dah
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(3*tdit);
+        //Inter-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(3*tdit);
+        //dah
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(3*tdit);
+        //Inter-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(3*tdit);
+        //dah
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(3*tdit);
+        //Inter-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(3*tdit);
+        //Inter-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(tdit);
+        //Intra-character space
+
+        digitalWrite(LED_GREEN, HIGH);
+        _delay_ms(tdit);
+        //dit
+
+        digitalWrite(LED_GREEN, LOW);
+        _delay_ms(7*tdit);
+        //Word space
 
         // Change LED value
-        if (led_value == 0) {
-            led_value = 1;
-            // Set pin to HIGH
-            digitalWrite(LED_GREEN, HIGH);
-            digitalWrite(LED_EXT, LOW);
-        }
-        else {
-            led_value = 0;
+        //if (led_value == 0) {
+        //    led_value = 1;
+        //    // Set pin to HIGH
+        //    digitalWrite(LED_GREEN, HIGH);
+        //    digitalWrite(LED_EXT, LOW);
+        //}
+        //else {
+        //    led_value = 0;
             // Clear pin to LOW
-            digitalWrite(LED_GREEN, LOW);
-            digitalWrite(LED_EXT, HIGH);
-        }
+        //    digitalWrite(LED_GREEN, LOW);
+        //    digitalWrite(LED_EXT, HIGH);
+        //}
     }
 
     // Will never reach this

@@ -1,0 +1,33 @@
+<circuit version="1.0.0-SR1" rev="1402" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
+
+<item itemtype="MCU" CircId="mega328-2" mainComp="false" ShowProp="Frequency" Show_id="true" Show_Val="true" Pos="444,284" rotation="0" hflip="1" vflip="1" label="mega328-2" idLabPos="0,-20" labelrot="0" valLabPos="-41.5096,41.6445" valLabRot="0" Frequency="16 MHz" Program="cv1.hex" Auto_Load="false" Rst_enabled="false" Ext_Osc="false" Wdt_enabled="false" />
+
+<item itemtype="Resistor" CircId="Resistor-3" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="508,364" rotation="0" hflip="1" vflip="1" label="Resistor-3" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="5600 Ω" />
+
+<item itemtype="Led" CircId="Led-4" mainComp="false" Show_id="false" Show_Val="false" Pos="532,388" rotation="90" hflip="1" vflip="1" label="Led-4" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="Yellow" Grounded="false" Threshold="2.4 V" MaxCurrent="0.03 A" Resistance="0.6 Ω" />
+
+<item itemtype="Ground" CircId="Ground-5" mainComp="false" Show_id="false" Show_Val="false" Pos="532,428" rotation="0" hflip="1" vflip="1" label="Ground-5" idLabPos="-16,8" labelrot="0" valLabPos="-16,20" valLabRot="0" />
+
+<item itemtype="Resistor" CircId="Resistor-17" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="412,396" rotation="0" hflip="1" vflip="1" label="Resistor-17" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="5600 Ω" />
+
+<item itemtype="Led" CircId="Led-20" mainComp="false" Show_id="false" Show_Val="false" Pos="372,396" rotation="-180" hflip="1" vflip="1" label="Led-20" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="Yellow" Grounded="false" Threshold="2.4 V" MaxCurrent="0.03 A" Resistance="0.6 Ω" />
+
+<item itemtype="Rail" CircId="Rail-22" mainComp="false" ShowProp="Voltage" Show_id="false" Show_Val="true" Pos="332,396" rotation="0" hflip="1" vflip="1" label="Rail-22" idLabPos="-16,-24" labelrot="0" valLabPos="-16,8" valLabRot="0" Voltage="5 V" />
+
+<item itemtype="TextComponent" CircId="TextComponent-28" mainComp="false" Show_id="false" Show_Val="false" Pos="552,380" rotation="0" hflip="1" vflip="1" label="LED GREEN" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Margin="5 _Pixels" Border="1 _Pixels" Opacity="1" Font="Helvetica [Cronyx]" Font_Size="10 _Pixels" Fixed_Width="false" Text="LED GREEN" />
+
+<item itemtype="TextComponent" CircId="TextComponent-29" mainComp="false" Show_id="false" Show_Val="false" Pos="348,356" rotation="0" hflip="1" vflip="1" label="LED EXT" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Margin="5 _Pixels" Border="1 _Pixels" Opacity="1" Font="Helvetica [Cronyx]" Font_Size="10 _Pixels" Fixed_Width="false" Text="LED EXT" />
+
+<item itemtype="Connector" uid="Connector-6" startpinid="Resistor-3-lPin" endpinid="mega328-2-PORTB5" pointList="492,364,484,364" />
+
+<item itemtype="Connector" uid="Connector-8" startpinid="Led-4-rPin" endpinid="Ground-5-Gnd" pointList="532,404,532,412" />
+
+<item itemtype="Connector" uid="Connector-7" startpinid="Resistor-3-rPin" endpinid="Led-4-lPin" pointList="524,364,532,364,532,372" />
+
+<item itemtype="Connector" uid="Connector-19" startpinid="Resistor-17-rPin" endpinid="mega328-2-PORTB0" pointList="428,396,436,396" />
+
+<item itemtype="Connector" uid="Connector-21" startpinid="Resistor-17-lPin" endpinid="Led-20-lPin" pointList="396,396,388,396" />
+
+<item itemtype="Connector" uid="Connector-27" startpinid="Rail-22-outnod" endpinid="Led-20-rPin" pointList="348,396,356,396" />
+
+</circuit>
