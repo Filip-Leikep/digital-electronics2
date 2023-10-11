@@ -11,12 +11,18 @@
 
 
 /* Defines -----------------------------------------------------------*/
-#define LED_GREEN PB5   // PB5 is AVR pin where green on-board LED 
-#define LED_EXT PB0 // is connected
+#define LED_1 PB1
+#define LED_2 PB2
+#define LED_3 PB3
+#define LED_4 PB4
+#define LED_5 PB5
+#define LED_IND PB6
+
 #define TL PD7
 #define SHORT_DELAY 250 // Delay in milliseconds
+
 #ifndef F_CPU
-# define F_CPU 16000000 // CPU frequency in Hz required for delay funcs
+#define F_CPU 16000000 // CPU frequency in Hz required for delay funcs
 #endif
 
 /* Includes ----------------------------------------------------------*/
@@ -25,68 +31,80 @@
 #include <gpio.h>
 
 
-// -----
-// This part is needed to use Arduino functions but also physical pin
-// names. We are using Arduino-style just to simplify the first lab.
-//#include "Arduino.h"
-//#define PB5 13          // In Arduino world, PB5 is called "13"
-//#define PB0 8
-// -----
-
-
-/* Function definitions ----------------------------------------------*/
-/**********************************************************************
- * Function: Main function where the program execution begins
- * Purpose:  Toggle one LED and use delay library.
- * Returns:  none
- **********************************************************************/
+/* Main program ----------------------------------------------------------*/
 int main(void)
 {
-    uint8_t led_value = 0;  // Local variable to keep LED status
+    uint8_t running = 0;  // Local variable to keep LED status
+    uint8_t check = 1;
     uint8_t btnPress;
-    //DDRB = DDRB | (1<<LED_GREEN);
-    //DDRB = DDRB | (1<<LED_EXT);
-    GPIO_mode_output(&DDRB, LED_GREEN);
-    GPIO_mode_output(&DDRB, LED_EXT);
-    GPIO_mode_input_pullup(&DDRD, TL);
-    
-    // Set pin where on-board LED is connected as output
-    //pinMode(LED_GREEN, OUTPUT);
-    //pinMode(LED_EXT, OUTPUT);
+    GPIO_mode_output(&DDRB, LED_1);
+    GPIO_mode_output(&DDRB, LED_2);
+    GPIO_mode_output(&DDRB, LED_3);
+    GPIO_mode_output(&DDRB, LED_4);
+    GPIO_mode_output(&DDRB, LED_5);
+    GPIO_mode_output(&DDRB, LED_IND);
+    GPIO_mode_input_nopull(&DDRD, TL);
     
     // Infinite loop
     while (1)
     {
       btnPress = GPIO_read(&PIND, TL);
-      if(btnPress == 0){
-        _delay_ms(SHORT_DELAY);
-        // Change LED value
-        if (led_value == 0) {
-          //digitalWrite(LED_GREEN, HIGH);
-          //digitalWrite(LED_EXT, LOW);
-          //PORTB |= (1<<LED_GREEN);
-          //PORTB = PORTB & ~(1<<LED_EXT);
-          GPIO_write_low(&PORTB, LED_EXT);
-          GPIO_write_high(&PORTB, LED_GREEN);
-          led_value = 1;
-          
+
+      if(btnPress == 1) {
+        if ((running==0) & (check==1)) {
+          running = 1;
+          GPIO_write_high(&PORTB, LED_IND);
+          check = 0;
         }
-        else {
-          led_value = 0;
-          // Clear pin to LOW
-          //digitalWrite(LED_GREEN, LOW);
-          //digitalWrite(LED_EXT, HIGH);
-          //PORTB = PORTB & ~(1<<LED_GREEN);
-          //PORTB |= (1<<LED_EXT);
-          GPIO_write_high(&PORTB, LED_EXT);
-          GPIO_write_low(&PORTB, LED_GREEN);
+        else if((running==1) & (check==1)) {
+          running = 0;
+          GPIO_write_low(&PORTB, LED_IND);
+          check = 0;
         }
       }
       else {
-        GPIO_write_high(&PORTB, LED_EXT);
-        GPIO_write_low(&PORTB, LED_GREEN);
+        check = 1;
       }
-        
+      
+      if(running==1){
+        GPIO_toggle(&PORTB, LED_1);
+        _delay_ms(SHORT_DELAY);
+        GPIO_toggle(&PORTB, LED_1);
+        GPIO_toggle(&PORTB, LED_2);
+        _delay_ms(SHORT_DELAY);
+        GPIO_toggle(&PORTB, LED_2);
+        GPIO_toggle(&PORTB, LED_3);
+        _delay_ms(SHORT_DELAY);
+        GPIO_toggle(&PORTB, LED_3);
+        GPIO_toggle(&PORTB, LED_4);
+        _delay_ms(SHORT_DELAY);
+        GPIO_toggle(&PORTB, LED_4);
+        GPIO_toggle(&PORTB, LED_5);
+        _delay_ms(SHORT_DELAY);
+        GPIO_toggle(&PORTB, LED_5);
+        //first direction
+
+        GPIO_write_high(&PORTB, LED_4);
+        _delay_ms(SHORT_DELAY);
+        GPIO_write_low(&PORTB, LED_4);
+        GPIO_write_high(&PORTB, LED_3);
+        _delay_ms(SHORT_DELAY);
+        GPIO_write_low(&PORTB, LED_3);
+        GPIO_write_high(&PORTB, LED_2);
+        _delay_ms(SHORT_DELAY);
+        GPIO_write_low(&PORTB, LED_2);
+        //second direction
+        btnPress = GPIO_read(&PIND, TL);
+      }
+
+      else{
+        //turns off all LEDs
+        GPIO_write_low(&PORTB, LED_1);
+        GPIO_write_low(&PORTB, LED_2);
+        GPIO_write_low(&PORTB, LED_3);
+        GPIO_write_low(&PORTB, LED_4);
+        GPIO_write_low(&PORTB, LED_5);
+      } 
     }
 
     // Will never reach this

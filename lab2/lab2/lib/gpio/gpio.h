@@ -83,10 +83,16 @@ uint8_t GPIO_read(volatile uint8_t *reg, uint8_t pin);
 
 
 /* GPIO_config_input_nopull */
-
+/**
+ * @brief  Configure one input pin.
+ * @param  reg Address of Data Direction Register, such as &DDRB
+ * @param  pin Pin designation in the interval 0 to 7
+ * @return none
+ */
+void GPIO_mode_input_nopull(volatile uint8_t *reg, uint8_t pin);
 
 /* GPIO_toggle */
-
+void GPIO_toggle(volatile uint8_t *reg, uint8_t pin);
 
 /** @} */
 
