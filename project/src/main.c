@@ -35,6 +35,7 @@
 volatile uint8_t new_air_data = 0;
 volatile uint8_t new_time_data = 0;
 volatile uint8_t water = 0;
+volatile uint8_t time_m [7];
 uint16_t moist_value;
 
 struct DHT_values_structure {
@@ -55,6 +56,7 @@ struct DHT_values_structure {
  **********************************************************************/
 int main(void)
 {
+    RTC_init(RTC_ADR,59,52,15,3,29,11,23);
     // Initialize display
     uart_init(UART_BAUD_SELECT(115200, F_CPU));
     char stringA[2];  // String for converting numbers by itoa()
@@ -110,11 +112,11 @@ int main(void)
             oled_puts(stringA);
             oled_gotoxy(9, 4);
             
-            if(moist_value>=800) {
+            if(moist_value>=900) {
                 oled_puts("aktivni     ");
                 GPIO_write_high(&PORTD, RELE);
             }
-            else if(moist_value<=680){
+            else if(moist_value<=880){
                 oled_puts("neaktivni");
                 GPIO_write_low(&PORTD, RELE);
             }
@@ -143,9 +145,23 @@ ISR(TIMER1_OVF_vect)
     moist_value = get_moisture();
     // Convert "moist_value" to "string" and display it
     itoa(moist_value, string, 10);
+    uart_puts("Vlhkost pudy: ");
     uart_puts(string);
     uart_putc('\n');
-    
+
+    uart_puts("Cas: ");
+    //time_m[0] = RTC_now(0x68)[0]; 
+    //uart_puts(itoa(sizeof(time), string, 10));
+    itoa(RTC_now(0x68)[2], string, 10);
+    uart_puts(string);
+    uart_putc(':');
+    itoa(RTC_now(0x68)[1], string, 10);
+    uart_puts(string);
+    uart_putc(':');
+    itoa(RTC_now(0x68)[0], string, 10);
+    uart_puts(string);
+    uart_puts("\r\n");
+
     twi_start();
     if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
         // Set internal memory location

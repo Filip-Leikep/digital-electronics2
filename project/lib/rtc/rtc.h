@@ -36,7 +36,7 @@ void RTC_init(uint8_t rtc_i2c_address, uint8_t seconds, uint8_t minutes, uint8_t
  * @param  I2C address of RTC module
  * @return arry of 7 elements: [0] seconds, [1] minutes, [2] hours, [3] day, [4] date, [5] month, [6] year
  */
-uint8_t RTC_now(uint8_t rtc_i2c_address);
+uint8_t *RTC_now(uint8_t rtc_i2c_address);
 
 
 
