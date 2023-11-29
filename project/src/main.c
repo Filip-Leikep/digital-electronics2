@@ -21,14 +21,19 @@
 #include <moisture_sens.h>
 #include <oled.h>
 #include <gpio.h>
+#include <rtc.h>
 
 #define SENSOR_ADR 0x5c
 #define SENSOR_HUM_MEM 0
 #define SENSOR_TEMP_MEM 2
 #define SENSOR_CHECKSUM 4
+
+#define RTC_ADR 0x68
+
 #define RELE PD2 
 
 volatile uint8_t new_air_data = 0;
+volatile uint8_t new_time_data = 0;
 volatile uint8_t water = 0;
 uint16_t moist_value;
 
@@ -39,6 +44,7 @@ struct DHT_values_structure {
    uint8_t temp_dec;
    uint8_t checksum;
 } dht12;
+
 
 /* Function definitions ----------------------------------------------*/
 /**********************************************************************
@@ -66,25 +72,12 @@ int main(void)
     GPIO_mode_output(&DDRD, RELE);
 
     //pozice na displeji pro vzdusnou teplotu a vlhkost
-    oled_init(OLED_DISP_ON);
-    oled_clrscr();
-    oled_charMode(NORMALSIZE);
-    oled_puts("Meteostanice");
-    oled_gotoxy(0, 2);
-    oled_puts("Teplota [°C]");
-    oled_gotoxy(0, 3);
-    oled_puts("Vlhkost RH[%]");
-    oled_gotoxy(0, 4);
-    oled_puts("Zalevani");
-    oled_display();
-    // Test if sensor is ready
-    if (twi_test_address(SENSOR_ADR) == 0)
-        uart_puts("I2C sensor detected\r\n");
-    else {
-        uart_puts("[ERROR] I2C device not detected\r\n");
-        while (1);
-    }
-    //
+    display_text();
+    
+    // Test if devices on I2C are ready
+    uint8_t addresses = {SENSOR_ADR, RTC_ADR};
+    twi_test_devices(addresses);
+
 
     // Infinite loop
     while (1)
@@ -152,6 +145,7 @@ ISR(TIMER1_OVF_vect)
     itoa(moist_value, string, 10);
     uart_puts(string);
     uart_putc('\n');
+    
     twi_start();
     if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
         // Set internal memory location
@@ -168,4 +162,30 @@ ISR(TIMER1_OVF_vect)
         new_air_data = 1;
     }
     twi_stop();
+}
+
+
+void display_text(void){
+    oled_init(OLED_DISP_ON);
+    oled_clrscr();
+    oled_charMode(NORMALSIZE);
+    oled_puts("Meteostanice");
+    oled_gotoxy(0, 2);
+    oled_puts("Teplota [°C]");
+    oled_gotoxy(0, 3);
+    oled_puts("Vlhkost RH[%]");
+    oled_gotoxy(0, 4);
+    oled_puts("Zalevani");
+    oled_display();
+}
+
+void twi_test_devices(uint8_t address[]){
+    for(uint8_t i; i++; i == sizeof(address)/8 - 1){
+        if (twi_test_address(address[i]) == 0)
+            uart_puts("I2C sensor detected\r\n");
+        else {
+            uart_puts("[ERROR] I2C device not detected\r\n");
+        while (1);
+    }
+    }
 }
