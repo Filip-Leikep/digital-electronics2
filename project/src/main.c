@@ -56,6 +56,7 @@ struct DHT_values_structure {
  **********************************************************************/
 int main(void)
 {
+    twi_init(); //inicializace i2c
     RTC_init(RTC_ADR,59,52,15,3,29,11,23);
     // Initialize display
     uart_init(UART_BAUD_SELECT(115200, F_CPU));
@@ -64,7 +65,6 @@ int main(void)
     // Configure Analog-to-Digital Convertion unit
     // Select ADC voltage reference to "AVcc with external capacitor at AREF pin"
     moisture_sens_init(); //inicializace půdní vlhkosti
-    twi_init(); //inicializace i2c
     // Configure 16-bit Timer/Counter1 to start ADC conversion
     // Set prescaler to 33 ms and enable overflow interrupt
     TIM1_OVF_1SEC
@@ -139,6 +139,7 @@ int main(void)
  **********************************************************************/
 ISR(TIMER1_OVF_vect)
 {
+    //RTC_init(RTC_ADR,59,52,15,3,29,11,23);
     char string[4];  // String for converted numbers by itoa()
     // Read converted moist_value
     // Note that, register pair ADCH and ADCL can be read as a 16-bit moist_value ADC
@@ -152,13 +153,13 @@ ISR(TIMER1_OVF_vect)
     uart_puts("Cas: ");
     //time_m[0] = RTC_now(0x68)[0]; 
     //uart_puts(itoa(sizeof(time), string, 10));
-    itoa(RTC_now(0x68)[2], string, 10);
+    itoa(RTC_now(0x68,2), string, 10);
     uart_puts(string);
     uart_putc(':');
-    itoa(RTC_now(0x68)[1], string, 10);
+    itoa(RTC_now(0x68,1), string, 10);
     uart_puts(string);
     uart_putc(':');
-    itoa(RTC_now(0x68)[0], string, 10);
+    itoa(RTC_now(0x68,0), string, 10);
     uart_puts(string);
     uart_puts("\r\n");
 
