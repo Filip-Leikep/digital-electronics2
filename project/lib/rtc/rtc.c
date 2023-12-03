@@ -35,7 +35,7 @@ uint8_t BCD_to_DEC (uint8_t BCD){
 
 //convert decimal to binary code decimal (used for writing to RTC registers)
 uint8_t DEC_to_BCD (uint8_t DEC){
-    char string [4];
+    //char string [4];
     uint8_t upper_nibble = DEC / 10;
     //itoa(upper_nibble, string, 2);
     //uart_puts("BCD: ");

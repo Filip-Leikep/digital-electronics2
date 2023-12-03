@@ -78,7 +78,7 @@ int main(void)
     
     // Test if devices on I2C are ready
     uint8_t addresses = {SENSOR_ADR, RTC_ADR};
-    twi_test_devices(addresses);
+    //twi_test_devices(addresses);
 
 
     // Infinite loop
