@@ -16,13 +16,13 @@
 #include <avr/io.h>         // AVR device-specific IO definitions
 #include <avr/interrupt.h>  // Interrupts standard C library for AVR-GCC
 #include "timer.h"          // Timer library for AVR-GCC
-#include <uart.h>            
+#include <uart.h>           // UART library for AVR
 #include <stdlib.h>         // C library. Needed for number conversions
-#include <moisture_sens.h>
-#include <oled.h>
-#include <gpio.h>
-#include <rtc.h>
-#include <eeprom_i2c.h>
+#include <moisture_sens.h>  // Library for reading from moisture sensor
+#include <oled.h>           // Library for using OLED display
+#include <gpio.h>           // Libary for driving general purpous input/output ports
+#include <rtc.h>            // Library for reading time form RTC module
+#include <eeprom_i2c.h>     // Library for writing and reading from EEPROM chip on RTC module (via I2C)
 
 #define SENSOR_ADR 0x5c
 #define EEPROM_ADR 0x57
@@ -32,18 +32,19 @@
 #define SENSOR_HUM_MEM 0
 #define SENSOR_TEMP_MEM 2
 #define SENSOR_CHECKSUM 4
+#define DRY 890
+#define WET 880
 
 #define RELE PD2 
 
-volatile uint8_t new_air_data = 0;
-volatile uint8_t new_time_data = 0;
-volatile uint8_t water = 0;
-volatile uint8_t time_m [7];
+volatile uint8_t new_data = 0;
+//volatile uint8_t new_time_data = 0;
+//volatile uint8_t water = 0;
+//volatile uint8_t time_m [7];
+volatile uint16_t eep_addr = 0;
 uint16_t moist_value;
-uint8_t wr = 0;
+uint8_t eep_log_done = 0;
 uint8_t data_r [4];
-
-volatile uint16_t addr = 0;
 
 struct DHT_values_structure {
    uint8_t hum_int;
@@ -54,6 +55,15 @@ struct DHT_values_structure {
 };
 
 struct DHT_values_structure dht12;
+
+struct DHT_values_structure DHT_read(struct DHT_values_structure dht12);
+void display_text(void);
+void update_vals_oled(struct DHT_values_structure dht12);
+void update_vals_uart(struct DHT_values_structure dht12);
+void twi_test_devices(uint8_t address[], uint8_t n_devices);
+//uint16_t watering(uint16_t moist_value, uint8_t eep_log_done, uint16_t eep_addr);
+void watering(void);
+
 /* Function definitions ----------------------------------------------*/
 /**********************************************************************
  * Function: Main function where the program execution begins
@@ -63,11 +73,13 @@ struct DHT_values_structure dht12;
  **********************************************************************/
 int main(void)
 {
+
+
     twi_init(); //inicializace i2c
     RTC_init(RTC_ADR,59,52,15,3,29,11,23);
     // Initialize display
     uart_init(UART_BAUD_SELECT(115200, F_CPU));
-    char stringA[2];  // String for converting numbers by itoa()
+    
     uart_puts("test");
     // Configure Analog-to-Digital Convertion unit
     // Select ADC voltage reference to "AVcc with external capacitor at AREF pin"
@@ -84,61 +96,24 @@ int main(void)
     display_text();
     
     // Test if devices on I2C are ready
-    uint8_t addresses = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
+    uint8_t addresses[N_I2C_DEVICES] = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
     twi_test_devices(addresses, N_I2C_DEVICES);
 
 
     // Infinite loop
     while (1)
     {
-        if (new_air_data == 1) {
-            itoa(dht12.temp_int, stringA, 10);
-            uart_puts("T ");
-            uart_puts(stringA);
-            uart_puts(".");
-            oled_gotoxy(15, 2);
-            oled_puts(stringA);
-            oled_puts(".");
-            itoa(dht12.temp_dec, stringA, 10);
-            oled_gotoxy(18, 2);
-            oled_puts(stringA);
-            uart_puts(stringA);
-            uart_puts(" °C\r\n");
-            itoa(dht12.hum_int, stringA, 10);
-            oled_gotoxy(15, 3);
-            oled_puts(stringA);
-            oled_puts(".");
-            uart_puts("RH ");
-            uart_puts(stringA);
-            uart_puts(".");
-            itoa(dht12.hum_dec, stringA, 10);
-            uart_puts(stringA);
-            uart_puts(" %\r\n");
-            uart_puts("\r\n");
-            oled_gotoxy(18, 3);
-            oled_puts(stringA);
-            oled_gotoxy(9, 4);
-            
-            if(moist_value>=890) {
-                oled_puts("aktivni     ");
-                GPIO_write_high(&PORTD, RELE);
-                if(wr == 0){            
-                    uint8_t data_w [4]= {RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1) };
-                    eeprom_P_write(EEPROM_ADR, addr, data_w, 4);
-                    wr = 1;
-                    addr =+ 4; 
-                }
-            }
-            else if(moist_value<=880){
-                oled_puts("neaktivni");
-                GPIO_write_low(&PORTD, RELE);
-                wr = 0;
-            }
+        if (new_data == 1) {
+            moist_value = get_moisture();
+            dht12 = DHT_read(dht12);
+            update_vals_uart(dht12);
+            update_vals_oled(dht12);
+            watering();
             oled_display();
             
             
             // Do not print it again and wait for the new data
-            new_air_data = 0;
+            new_data = 0;
             }
     }
 
@@ -146,26 +121,7 @@ int main(void)
     return 0;
 }
 
-struct DHT_values_structure DHT_read(struct DHT_values_structure dht12){
-    //struct DHT_values_structure dht;
-    struct DHT_values_structure dht = dht12;
-    twi_start();
-    if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
-        // Set internal memory location
-        twi_write(SENSOR_HUM_MEM);
-        twi_stop();
-        // Read data from internal memory
-        twi_start();
-        twi_write((SENSOR_ADR<<1) | TWI_READ);
-        dht.hum_int = twi_read(TWI_ACK);
-        dht.hum_dec = twi_read(TWI_ACK);
-        dht.temp_int = twi_read(TWI_ACK);
-        dht.temp_dec = twi_read(TWI_NACK);
-        new_air_data = 1;
-    }
-    twi_stop();
-    return dht;
-}
+
 /* Interrupt service routines ----------------------------------------*/
 /**********************************************************************
  * Function: Timer/Counter1 overflow interrupt
@@ -174,12 +130,12 @@ struct DHT_values_structure DHT_read(struct DHT_values_structure dht12){
 ISR(TIMER1_OVF_vect)
 {
     //RTC_init(RTC_ADR,59,52,15,3,29,11,23);
-    char string[4];  // String for converted numbers by itoa()
+    //char string[4];  // String for converted numbers by itoa()
     // Read converted moist_value
     // Note that, register pair ADCH and ADCL can be read as a 16-bit moist_value ADC
-    moist_value = get_moisture();
+    //moist_value = get_moisture();
     // Convert "moist_value" to "string" and display it
-    itoa(moist_value, string, 10);
+    /*itoa(moist_value, string, 10);
     uart_puts("Vlhkost pudy: ");
     uart_puts(string);
     uart_putc('\n');
@@ -195,7 +151,7 @@ ISR(TIMER1_OVF_vect)
     uart_putc(':');
     itoa(RTC_now(0x68,0), string, 10);
     uart_puts(string);
-    uart_puts("\r\n");
+    uart_puts("\r\n");*/
     /*
     twi_start();
     if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
@@ -213,10 +169,10 @@ ISR(TIMER1_OVF_vect)
         new_air_data = 1;
     }
     twi_stop();*/
-    new_air_data = 1;
-    dht12 = DHT_read(dht12);
+    //new_air_data = 1;
+    //dht12 = DHT_read(dht12);
     //itoa(eeprom_read(EEPROM_ADR, 0x0000, 255, data_r), string, 10);
-    eeprom_read(EEPROM_ADR, 0x0004, 4, data_r);
+    /*eeprom_read(EEPROM_ADR, 0x0004, 4, data_r);
     uart_putc('\n');
     uart_puts("read: ");
     //uart_puts(string);
@@ -225,8 +181,9 @@ ISR(TIMER1_OVF_vect)
       itoa(data_r[i], string, 10);
       uart_puts(string);
       uart_puts(", ");
-    }
+    }*/
     //uart_putc('\n');
+    new_data = 1;
 }
 
 
@@ -244,6 +201,67 @@ void display_text(void){
     oled_display();
 }
 
+void update_vals_oled(struct DHT_values_structure dht12){
+    char string[2];  // String for converting numbers by itoa()
+    
+    itoa(dht12.temp_int, string, 10);
+    oled_gotoxy(15, 2);
+    oled_puts(string);
+    oled_puts(".");
+
+    itoa(dht12.temp_dec, string, 10);
+    oled_gotoxy(18, 2);
+    oled_puts(string);
+    
+    itoa(dht12.hum_int, string, 10);
+    oled_gotoxy(15, 3);
+    oled_puts(string);
+    oled_puts(".");
+
+    itoa(dht12.hum_dec, string, 10);
+    oled_gotoxy(18, 3);
+    oled_puts(string);
+    oled_gotoxy(9, 4);
+}
+
+void update_vals_uart(struct DHT_values_structure dht12){
+    char string[2];  // String for converting numbers by itoa()
+    itoa(dht12.temp_int, string, 10);
+    uart_puts("T ");
+    uart_puts(string);
+    uart_puts(".");
+    
+    itoa(dht12.temp_dec, string, 10);
+    uart_puts(string);
+    uart_puts(" °C\r\n");
+
+    itoa(dht12.hum_int, string, 10);
+    uart_puts("RH ");
+    uart_puts(string);
+    uart_puts(".");
+
+    itoa(dht12.hum_dec, string, 10);
+    uart_puts(string);
+    uart_puts(" %\r\n");
+    uart_puts("\r\n");
+
+    itoa(moist_value, string, 10);
+    uart_puts("Vlhkost pudy: ");
+    uart_puts(string);
+    uart_putc('\n');
+
+    uart_puts("Cas: ");
+    itoa(RTC_now(RTC_ADR,2), string, 10);
+    uart_puts(string);
+    uart_putc(':');
+    itoa(RTC_now(RTC_ADR,1), string, 10);
+    uart_puts(string);
+    uart_putc(':');
+    itoa(RTC_now(RTC_ADR,0), string, 10);
+    uart_puts(string);
+    uart_puts("\r\n");
+}
+
 void twi_test_devices(uint8_t address[], uint8_t n_devices){
     for(uint8_t i = 0; i < (n_devices - 1); i++){
         if (twi_test_address(address[i]) == 0)
@@ -255,6 +273,44 @@ void twi_test_devices(uint8_t address[], uint8_t n_devices){
     }
 }
 
+//uint16_t watering(uint16_t moist_value, uint8_t eep_log_done, uint16_t eep_addr){
+void watering(void){
+    if(moist_value >= DRY) {
+        oled_puts("aktivni     ");
+        GPIO_write_high(&PORTD, RELE);
+        if(eep_log_done == 0){            
+            uint8_t data_w [4]= {RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1)};
+            eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
+            eep_log_done = 1;
+            //return (eep_addr =+ 4); 
+            eep_addr =+ 4;
+            }
+        }else if(moist_value <= WET){
+            oled_puts("neaktivni");
+            GPIO_write_low(&PORTD, RELE);
+            eep_log_done = 0;
+        }
+    
+}
 
-
+struct DHT_values_structure DHT_read(struct DHT_values_structure dht12){
+    //struct DHT_values_structure dht;
+    struct DHT_values_structure dht = dht12;
+    twi_start();
+    if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
+        // Set internal memory location
+        twi_write(SENSOR_HUM_MEM);
+        twi_stop();
+        // Read data from internal memory
+        twi_start();
+        twi_write((SENSOR_ADR<<1) | TWI_READ);
+        dht.hum_int = twi_read(TWI_ACK);
+        dht.hum_dec = twi_read(TWI_ACK);
+        dht.temp_int = twi_read(TWI_ACK);
+        dht.temp_dec = twi_read(TWI_NACK);
+        //new_air_data = 1;
+    }
+    twi_stop();
+    return dht;
+}
 
