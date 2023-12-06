@@ -29,7 +29,7 @@ uint8_t eeprom_P_write(uint8_t eeprom_i2c_addr, uint16_t addr, uint8_t data[], u
     if (twi_write((eeprom_i2c_addr<<1) | TWI_WRITE) == 0) {
         twi_write(first_word_addr);
         twi_write(second_word_addr);
-        for (uint8_t i; i < n_bytes; i++){
+        for (uint8_t i = 0; i < n_bytes; i++){
             status = twi_write(data[i]);
         }
     }
@@ -68,12 +68,14 @@ uint8_t eeprom_read(uint8_t eeprom_i2c_addr, uint16_t start_addr, uint8_t n_byte
         //twi_stop();
         twi_start();
         status = twi_write((eeprom_i2c_addr<<1) | TWI_READ);
-        for(uint8_t i; i < n_bytes; i++){
-            if(i != n_bytes - 1){
-                data[i] = twi_read(TWI_ACK);
-            }else{
+        for(uint8_t i = 0; i < n_bytes; i++){
+            //status = i;
+            if(i == (n_bytes - 1)){
                 data[i] = twi_read(TWI_NACK);
                 status = 0;
+            }else{
+                data[i] = twi_read(TWI_ACK);
+                //status = i;
             }
             
         }

@@ -22,13 +22,16 @@
 #include <oled.h>
 #include <gpio.h>
 #include <rtc.h>
+#include <eeprom_i2c.h>
 
 #define SENSOR_ADR 0x5c
+#define EEPROM_ADR 0x57
+#define RTC_ADR 0x68
+#define N_I2C_DEVICES 3
+#define HOUR 3600
 #define SENSOR_HUM_MEM 0
 #define SENSOR_TEMP_MEM 2
 #define SENSOR_CHECKSUM 4
-
-#define RTC_ADR 0x68
 
 #define RELE PD2 
 
@@ -37,6 +40,7 @@ volatile uint8_t new_time_data = 0;
 volatile uint8_t water = 0;
 volatile uint8_t time_m [7];
 uint16_t moist_value;
+volatile uint16_t hour_ctn;
 
 struct DHT_values_structure {
    uint8_t hum_int;
@@ -44,7 +48,7 @@ struct DHT_values_structure {
    uint8_t temp_int;
    uint8_t temp_dec;
    uint8_t checksum;
-} dht12;
+}dht12;
 
 
 /* Function definitions ----------------------------------------------*/
@@ -77,8 +81,8 @@ int main(void)
     display_text();
     
     // Test if devices on I2C are ready
-    uint8_t addresses = {SENSOR_ADR, RTC_ADR};
-    //twi_test_devices(addresses);
+    uint8_t addresses = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
+    twi_test_devices(addresses, N_I2C_DEVICES);
 
 
     // Infinite loop
@@ -122,6 +126,11 @@ int main(void)
             }
             oled_display();
             
+            if(hour_ctn > HOUR){
+                eeprom_P_write(EEPROM_ADR, addr, data, n_bytes);
+                hour_ctn = 0;
+            }
+
             // Do not print it again and wait for the new data
             new_air_data = 0;
             }
@@ -143,6 +152,7 @@ ISR(TIMER1_OVF_vect)
     char string[4];  // String for converted numbers by itoa()
     // Read converted moist_value
     // Note that, register pair ADCH and ADCL can be read as a 16-bit moist_value ADC
+    hour_ctn++;
     moist_value = get_moisture();
     // Convert "moist_value" to "string" and display it
     itoa(moist_value, string, 10);
@@ -162,7 +172,7 @@ ISR(TIMER1_OVF_vect)
     itoa(RTC_now(0x68,0), string, 10);
     uart_puts(string);
     uart_puts("\r\n");
-
+    /*
     twi_start();
     if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
         // Set internal memory location
@@ -175,10 +185,11 @@ ISR(TIMER1_OVF_vect)
         dht12.hum_dec = twi_read(TWI_ACK);
         dht12.temp_int = twi_read(TWI_ACK);
         dht12.temp_dec = twi_read(TWI_NACK);
-
+    
         new_air_data = 1;
     }
-    twi_stop();
+    twi_stop();*/
+    dht12 = DHT_read();
 }
 
 
@@ -196,8 +207,8 @@ void display_text(void){
     oled_display();
 }
 
-void twi_test_devices(uint8_t address[]){
-    for(uint8_t i; i++; i == sizeof(address)/8 - 1){
+void twi_test_devices(uint8_t address[], uint8_t n_devices){
+    for(uint8_t i; i < n_devices - 1; i++){
         if (twi_test_address(address[i]) == 0)
             uart_puts("I2C sensor detected\r\n");
         else {
@@ -206,3 +217,25 @@ void twi_test_devices(uint8_t address[]){
     }
     }
 }
+
+
+struct DHT_values_structure DHT_read(void){
+    struct DHT_values_structure dht;
+    twi_start();
+    if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
+        // Set internal memory location
+        twi_write(SENSOR_HUM_MEM);
+        twi_stop();
+        // Read data from internal memory
+        twi_start();
+        twi_write((SENSOR_ADR<<1) | TWI_READ);
+        dht.hum_int = twi_read(TWI_ACK);
+        dht.hum_dec = twi_read(TWI_ACK);
+        dht.temp_int = twi_read(TWI_ACK);
+        dht.temp_dec = twi_read(TWI_NACK);
+        new_air_data = 1;
+    }
+    twi_stop();
+    return dht12;
+}
+

@@ -8,7 +8,7 @@
 
 #define EEPROM_ADR 0x57
 volatile uint8_t r_w;
-
+uint8_t data_r[10];// = {0,0,0,0,0,0,0,0,0,0};
 
 int main(void)
 {
@@ -47,8 +47,8 @@ ISR(TIMER1_OVF_vect)
   uart_puts("stav: ");
   uint8_t prnt;
   char string[4]; 
-  uint8_t data_w[] = {1,2,30,4,100,6,7,18,9,10};
-  uint8_t data_r[] = {0,0,0,0,0,0,0,0,0,0};
+  //uint8_t data_w[] = {1,2,30,4,100,6,7,18,9,10};
+  //uint8_t data_r[] = {0,0,0,0,0,0,0,0,0,0};
   /*
   if(r_w != 1){
     itoa(eeprom_P_write(EEPROM_ADR, 0x0120, data_w,10), string, 10);
@@ -69,7 +69,8 @@ ISR(TIMER1_OVF_vect)
       uart_puts(", ");
     }
   }*/
-  prnt = eeprom_read(EEPROM_ADR, 0x0120, 10, data_r);
+  
+  prnt = eeprom_read(EEPROM_ADR, 0x0002, 10, data_r);
     itoa(prnt, string, 10);
     uart_puts("read: ");
     uart_puts(string);
@@ -80,4 +81,17 @@ ISR(TIMER1_OVF_vect)
       uart_puts(string);
       uart_puts(", ");
     }
+    /*
+  for(uint8_t i; i <32; i++){
+    prnt = eeprom_B_read(EEPROM_ADR, 0x0000+i);
+    itoa(prnt, string, 10);
+    uart_puts("read: ");
+    uart_puts(string);
+    uart_putc('\n');
+  }*/
+  /*
+  prnt = eeprom_B_read(EEPROM_ADR, 0x0032);
+    itoa(prnt, string, 10);
+    uart_puts("read: ");
+    uart_puts(string);*/
 }
