@@ -22,13 +22,16 @@
 #include <oled.h>
 #include <gpio.h>
 #include <rtc.h>
+#include <eeprom_i2c.h>
 
 #define SENSOR_ADR 0x5c
+#define EEPROM_ADR 0x57
+#define RTC_ADR 0x68
+#define N_I2C_DEVICES 3
+#define HOUR 3600
 #define SENSOR_HUM_MEM 0
 #define SENSOR_TEMP_MEM 2
 #define SENSOR_CHECKSUM 4
-
-#define RTC_ADR 0x68
 
 #define RELE PD2 
 
@@ -37,6 +40,7 @@ volatile uint8_t new_time_data = 0;
 volatile uint8_t water = 0;
 volatile uint8_t time_m [7];
 uint16_t moist_value;
+volatile uint16_t hour_ctn;
 
 struct DHT_values_structure {
    uint8_t hum_int;
@@ -77,8 +81,8 @@ int main(void)
     display_text();
     
     // Test if devices on I2C are ready
-    uint8_t addresses = {SENSOR_ADR, RTC_ADR};
-    //twi_test_devices(addresses);
+    uint8_t addresses = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
+    twi_test_devices(addresses, N_I2C_DEVICES);
 
 
     // Infinite loop
@@ -122,6 +126,11 @@ int main(void)
             }
             oled_display();
             
+            if(hour_ctn > HOUR){
+                eeprom_P_write(EEPROM_ADR, addr, data, n_bytes);
+                hour_ctn = 0;
+            }
+
             // Do not print it again and wait for the new data
             new_air_data = 0;
             }
@@ -143,6 +152,7 @@ ISR(TIMER1_OVF_vect)
     char string[4];  // String for converted numbers by itoa()
     // Read converted moist_value
     // Note that, register pair ADCH and ADCL can be read as a 16-bit moist_value ADC
+    hour_ctn++;
     moist_value = get_moisture();
     // Convert "moist_value" to "string" and display it
     itoa(moist_value, string, 10);
@@ -196,8 +206,8 @@ void display_text(void){
     oled_display();
 }
 
-void twi_test_devices(uint8_t address[]){
-    for(uint8_t i; i++; i == sizeof(address)/8 - 1){
+void twi_test_devices(uint8_t address[], uint8_t n_devices){
+    for(uint8_t i; i < n_devices - 1; i++){
         if (twi_test_address(address[i]) == 0)
             uart_puts("I2C sensor detected\r\n");
         else {
@@ -206,3 +216,9 @@ void twi_test_devices(uint8_t address[]){
     }
     }
 }
+
+
+struct DHT_values_structure DHT_read(void){
+    
+}
+
