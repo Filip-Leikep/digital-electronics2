@@ -28,7 +28,7 @@
 #define EEPROM_ADR 0x57
 #define RTC_ADR 0x68
 #define N_I2C_DEVICES 3
-#define HOUR 3600
+
 #define SENSOR_HUM_MEM 0
 #define SENSOR_TEMP_MEM 2
 #define SENSOR_CHECKSUM 4
@@ -40,7 +40,10 @@ volatile uint8_t new_time_data = 0;
 volatile uint8_t water = 0;
 volatile uint8_t time_m [7];
 uint16_t moist_value;
-volatile uint16_t hour_ctn;
+uint8_t wr = 0;
+uint8_t data_r [4];
+
+volatile uint16_t addr = 0;
 
 struct DHT_values_structure {
    uint8_t hum_int;
@@ -48,9 +51,9 @@ struct DHT_values_structure {
    uint8_t temp_int;
    uint8_t temp_dec;
    uint8_t checksum;
-}dht12;
+};
 
-
+struct DHT_values_structure dht12;
 /* Function definitions ----------------------------------------------*/
 /**********************************************************************
  * Function: Main function where the program execution begins
@@ -116,21 +119,24 @@ int main(void)
             oled_puts(stringA);
             oled_gotoxy(9, 4);
             
-            if(moist_value>=900) {
+            if(moist_value>=890) {
                 oled_puts("aktivni     ");
                 GPIO_write_high(&PORTD, RELE);
+                if(wr == 0){            
+                    uint8_t data_w [4]= {RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1) };
+                    eeprom_P_write(EEPROM_ADR, addr, data_w, 4);
+                    wr = 1;
+                    addr =+ 4; 
+                }
             }
             else if(moist_value<=880){
                 oled_puts("neaktivni");
                 GPIO_write_low(&PORTD, RELE);
+                wr = 0;
             }
             oled_display();
             
-            if(hour_ctn > HOUR){
-                eeprom_P_write(EEPROM_ADR, addr, data, n_bytes);
-                hour_ctn = 0;
-            }
-
+            
             // Do not print it again and wait for the new data
             new_air_data = 0;
             }
@@ -140,7 +146,26 @@ int main(void)
     return 0;
 }
 
-
+struct DHT_values_structure DHT_read(struct DHT_values_structure dht12){
+    //struct DHT_values_structure dht;
+    struct DHT_values_structure dht = dht12;
+    twi_start();
+    if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
+        // Set internal memory location
+        twi_write(SENSOR_HUM_MEM);
+        twi_stop();
+        // Read data from internal memory
+        twi_start();
+        twi_write((SENSOR_ADR<<1) | TWI_READ);
+        dht.hum_int = twi_read(TWI_ACK);
+        dht.hum_dec = twi_read(TWI_ACK);
+        dht.temp_int = twi_read(TWI_ACK);
+        dht.temp_dec = twi_read(TWI_NACK);
+        new_air_data = 1;
+    }
+    twi_stop();
+    return dht;
+}
 /* Interrupt service routines ----------------------------------------*/
 /**********************************************************************
  * Function: Timer/Counter1 overflow interrupt
@@ -152,7 +177,6 @@ ISR(TIMER1_OVF_vect)
     char string[4];  // String for converted numbers by itoa()
     // Read converted moist_value
     // Note that, register pair ADCH and ADCL can be read as a 16-bit moist_value ADC
-    hour_ctn++;
     moist_value = get_moisture();
     // Convert "moist_value" to "string" and display it
     itoa(moist_value, string, 10);
@@ -189,7 +213,20 @@ ISR(TIMER1_OVF_vect)
         new_air_data = 1;
     }
     twi_stop();*/
-    dht12 = DHT_read();
+    new_air_data = 1;
+    dht12 = DHT_read(dht12);
+    //itoa(eeprom_read(EEPROM_ADR, 0x0000, 255, data_r), string, 10);
+    eeprom_read(EEPROM_ADR, 0x0004, 4, data_r);
+    uart_putc('\n');
+    uart_puts("read: ");
+    //uart_puts(string);
+    //uart_putc('\n');
+    for(uint8_t i; i <4; i++){
+      itoa(data_r[i], string, 10);
+      uart_puts(string);
+      uart_puts(", ");
+    }
+    //uart_putc('\n');
 }
 
 
@@ -208,34 +245,16 @@ void display_text(void){
 }
 
 void twi_test_devices(uint8_t address[], uint8_t n_devices){
-    for(uint8_t i; i < n_devices - 1; i++){
+    for(uint8_t i = 0; i < (n_devices - 1); i++){
         if (twi_test_address(address[i]) == 0)
             uart_puts("I2C sensor detected\r\n");
         else {
             uart_puts("[ERROR] I2C device not detected\r\n");
-        while (1);
+        //while (1);
     }
     }
 }
 
 
-struct DHT_values_structure DHT_read(void){
-    struct DHT_values_structure dht;
-    twi_start();
-    if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
-        // Set internal memory location
-        twi_write(SENSOR_HUM_MEM);
-        twi_stop();
-        // Read data from internal memory
-        twi_start();
-        twi_write((SENSOR_ADR<<1) | TWI_READ);
-        dht.hum_int = twi_read(TWI_ACK);
-        dht.hum_dec = twi_read(TWI_ACK);
-        dht.temp_int = twi_read(TWI_ACK);
-        dht.temp_dec = twi_read(TWI_NACK);
-        new_air_data = 1;
-    }
-    twi_stop();
-    return dht12;
-}
+
 

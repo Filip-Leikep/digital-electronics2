@@ -70,7 +70,7 @@ ISR(TIMER1_OVF_vect)
     }
   }*/
   
-  prnt = eeprom_read(EEPROM_ADR, 0x0002, 10, data_r);
+  prnt = eeprom_read(EEPROM_ADR, 0x0000, 10, data_r);
     itoa(prnt, string, 10);
     uart_puts("read: ");
     uart_puts(string);
