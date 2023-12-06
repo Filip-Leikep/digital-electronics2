@@ -48,7 +48,7 @@ struct DHT_values_structure {
    uint8_t temp_int;
    uint8_t temp_dec;
    uint8_t checksum;
-} dht12;
+}dht12;
 
 
 /* Function definitions ----------------------------------------------*/
@@ -172,7 +172,7 @@ ISR(TIMER1_OVF_vect)
     itoa(RTC_now(0x68,0), string, 10);
     uart_puts(string);
     uart_puts("\r\n");
-
+    /*
     twi_start();
     if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
         // Set internal memory location
@@ -185,10 +185,11 @@ ISR(TIMER1_OVF_vect)
         dht12.hum_dec = twi_read(TWI_ACK);
         dht12.temp_int = twi_read(TWI_ACK);
         dht12.temp_dec = twi_read(TWI_NACK);
-
+    
         new_air_data = 1;
     }
-    twi_stop();
+    twi_stop();*/
+    dht12 = DHT_read();
 }
 
 
@@ -219,6 +220,22 @@ void twi_test_devices(uint8_t address[], uint8_t n_devices){
 
 
 struct DHT_values_structure DHT_read(void){
-    
+    struct DHT_values_structure dht;
+    twi_start();
+    if (twi_write((SENSOR_ADR<<1) | TWI_WRITE) == 0) {
+        // Set internal memory location
+        twi_write(SENSOR_HUM_MEM);
+        twi_stop();
+        // Read data from internal memory
+        twi_start();
+        twi_write((SENSOR_ADR<<1) | TWI_READ);
+        dht.hum_int = twi_read(TWI_ACK);
+        dht.hum_dec = twi_read(TWI_ACK);
+        dht.temp_int = twi_read(TWI_ACK);
+        dht.temp_dec = twi_read(TWI_NACK);
+        new_air_data = 1;
+    }
+    twi_stop();
+    return dht12;
 }
 
