@@ -82,4 +82,4 @@ uint8_t eeprom_read(uint8_t eeprom_i2c_addr, uint16_t start_addr, uint8_t n_byte
     }
     twi_stop();
     return status;
-}
+}//
