@@ -8,11 +8,16 @@ The goal of this project was to design an embedded system which would use Arduin
 
 
 ## Hardware description of demo application
-air humidity sensorDHT12
-capacitive soil moisture sensor V1.2
+Air humidity sensor DHT12
+
+Capacitive soil moisture sensor V1.2
+
 LCD SH1106
+
 RTC DS3231
+
 EPROM AT24C32
+
 ![Device](images/device.jpg)
 Insert descriptive text and schematic(s) of your implementation.
 
