@@ -15,7 +15,8 @@ RTC DS3231
 EPROM AT24C32  
 
 ![Device](images/device.jpg)
-Insert descriptive text and schematic(s) of your implementation.
+
+All components except the capacitive soil moisture sensor are connected through the I2C serial bus. The capacitive soil moisture sensor is connected to the pin `A0` to the internal `ADC`.
 
 ## Software description
 
