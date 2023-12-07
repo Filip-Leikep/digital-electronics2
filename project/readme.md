@@ -16,7 +16,7 @@ EPROM AT24C32
 
 ![Device](images/device.jpg)
 
-All components except the capacitive soil moisture sensor are connected through the I2C serial bus. The capacitive soil moisture sensor is connected to the pin `A0` to the internal `ADC`.
+All components except the capacitive soil moisture sensor are connected through the I2C serial bus. The capacitive soil moisture sensor is connected to the pin `A0` to the internal ADC which converts the analog value to digital form which is then later used to determine the moisture of the soil. Watering process itself is in this project represented by an LED connected to the pin `PD2` which lights up when the watering process gets iniciated and turns off when the watering process ends but in real life application the LED would be replaced by a relay that would turn on/off a water pump. An RTC & EEPROM module with `DS3231 & AT24C32` IC`s is connected through I2C serial bus and keeps track of time and is also used for data logging. Temperature and relative humidity of air is measured by I2C sensor DHT12. An external OLED panel SH1106 is connected through I2C. It displays data such as air humidity (%), air temperature (°C), real time & date and the status of the watering process (active/inactive). Soil moisture isn't displayed because it is only an abstract number.
 
 ## Software description
 
