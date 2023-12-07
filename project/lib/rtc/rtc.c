@@ -159,5 +159,6 @@ uint8_t RTC_now(uint8_t rtc_i2c_address, uint8_t data){
         case 6:
             return time[6];
             break;
-    }   
+    }  
+    return 0; 
 }

@@ -6,6 +6,8 @@
 //#include <uart.h>
 #include <stdlib.h> 
 
+#define WAIT_WRITE 160000
+
 uint8_t eeprom_B_write(uint8_t eeprom_i2c_addr, uint16_t addr, uint8_t data){
     uint8_t status;
     uint8_t second_word_addr = addr & 0xFF;
@@ -18,6 +20,7 @@ uint8_t eeprom_B_write(uint8_t eeprom_i2c_addr, uint16_t addr, uint8_t data){
         status = twi_write(data);
     }
     twi_stop();
+    for(uint32_t i = 0; i < WAIT_WRITE; i++) asm("NOP");
     return status;
 }
 
@@ -34,6 +37,7 @@ uint8_t eeprom_P_write(uint8_t eeprom_i2c_addr, uint16_t addr, uint8_t data[], u
         }
     }
     twi_stop();
+    for(uint32_t i = 0; i < WAIT_WRITE; i++) asm("NOP");
     return status;
 }
 
@@ -81,5 +85,6 @@ uint8_t eeprom_read(uint8_t eeprom_i2c_addr, uint16_t start_addr, uint8_t n_byte
         }
     }
     twi_stop();
+
     return status;
 }//

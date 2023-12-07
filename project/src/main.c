@@ -43,7 +43,7 @@ volatile uint8_t new_data = 0;
 //volatile uint8_t new_time_data = 0;
 //volatile uint8_t water = 0;
 //volatile uint8_t time_m [7];
-volatile uint16_t eep_addr = 0;
+uint16_t eep_addr = 0;
 uint16_t moist_value;
 uint8_t eep_log_done = 0;
 uint8_t data_r;
@@ -363,7 +363,7 @@ void watering(void){
             eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
             eep_log_done = 1;
             //return (eep_addr =+ 4); 
-            eep_addr =+ 4;
+            eep_addr += 4;
             }
         }else if(moist_value <= WET){
             oled_gotoxy(9, 3);
