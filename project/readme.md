@@ -21,7 +21,7 @@ All components except the capacitive soil moisture sensor are connected through 
 ## Software description
 
 Put flowchats of your algorithm(s) and direct links to source files in `src` or `lib` folders.
-[lib](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/lib), [src]([https://www.google.com](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/src)
+[lib](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/lib), [src](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/src)
 
 ## Instructions
 
