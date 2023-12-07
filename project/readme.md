@@ -13,7 +13,7 @@ capacitive soil moisture sensor V1.2
 LCD SH1106
 RTC DS3231
 EPROM AT24C32
-![Device](images\device.jpg)
+![Device](images/device.jpg)
 Insert descriptive text and schematic(s) of your implementation.
 
 ## Software description
