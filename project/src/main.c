@@ -36,6 +36,8 @@
 #define WET 880
 
 #define RELE PD2 
+#define BUTTON_DATA PD3 
+#define LED PB5
 
 volatile uint8_t new_data = 0;
 //volatile uint8_t new_time_data = 0;
@@ -75,14 +77,16 @@ void watering(void);
  **********************************************************************/
 int main(void)
 {
-
-
+    uint8_t check = 1;
+    uint8_t btnPress;
     twi_init(); //inicializace i2c
-    RTC_init(RTC_ADR,59,52,15,3,29,11,23);
+    RTC_init(RTC_ADR,59,55,15,3,29,11,23);
     // Initialize display
     uart_init(UART_BAUD_SELECT(115200, F_CPU));
-    
+    uart_putc('\n');
+    uart_putc('\n');
     uart_puts("test");
+    uart_putc('\n');
     // Configure Analog-to-Digital Convertion unit
     // Select ADC voltage reference to "AVcc with external capacitor at AREF pin"
     moisture_sens_init(); //inicializace půdní vlhkosti
@@ -93,19 +97,22 @@ int main(void)
     // Enables interrupts by setting the global interrupt mask
     sei();
     GPIO_mode_output(&DDRD, RELE);
+    GPIO_mode_output(&DDRB, LED);
+    GPIO_mode_input_pullup(&DDRD, BUTTON_DATA);
 
     //pozice na displeji pro vzdusnou teplotu a vlhkost
     display_text();
     
     // Test if devices on I2C are ready
-    uint8_t addresses[N_I2C_DEVICES] = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
-    twi_test_devices(addresses, N_I2C_DEVICES);
-    data_read();
+    //uint8_t addresses[N_I2C_DEVICES] = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
+    //twi_test_devices(addresses, N_I2C_DEVICES);
+    //data_read();
 
 
     // Infinite loop
     while (1)
     {
+
         if (new_data == 1) {
             moist_value = get_moisture();
             dht12 = DHT_read(dht12);
@@ -115,7 +122,7 @@ int main(void)
             time_from_rtc[3] = RTC_now(RTC_ADR,4);
             time_from_rtc[4] = RTC_now(RTC_ADR,5);
             time_from_rtc[5] = RTC_now(RTC_ADR,6);
-            update_vals_uart();
+            //update_vals_uart();
             update_vals_oled();
             watering();
             oled_display();
@@ -123,6 +130,17 @@ int main(void)
             
             // Do not print it again and wait for the new data
             new_data = 0;
+            }
+            btnPress = GPIO_read(&PIND, BUTTON_DATA);
+
+            if(btnPress == 0) {
+            if (check==1) {
+            data_read();
+            check = 0;
+            }
+            }
+            else {
+            check = 1;
             }
     }
 
@@ -201,16 +219,18 @@ void display_text(void){
     oled_clrscr();
     oled_charMode(NORMALSIZE);
     oled_puts("Zavlazovani");
-    oled_gotoxy(0, 2);
+    oled_gotoxy(0, 1);
     oled_puts("Teplota [°C]");
-    oled_gotoxy(0, 3);
+    oled_gotoxy(0, 2);
     oled_puts("Vlhkost RH[%]");
-    oled_gotoxy(0, 4);
+    oled_gotoxy(0, 3);
     oled_puts("Zalevani");
-    oled_gotoxy(0, 5);
+    oled_gotoxy(0, 4);
     oled_puts("Cas");
-    oled_gotoxy(0, 6);
+    oled_gotoxy(0, 5);
     oled_puts("Datum");
+    //oled_gotoxy(0, 6);
+    //oled_puts("Posledni zaliti:");
     oled_display();
 }
 
@@ -218,26 +238,30 @@ void update_vals_oled(void){//struct DHT_values_structure dht12
     char string[2];  // String for converting numbers by itoa()
     
     itoa(dht12.temp_int, string, 10);
-    oled_gotoxy(15, 2);
+    oled_gotoxy(15, 1);
     oled_puts(string);
     oled_puts(".");
 
     itoa(dht12.temp_dec, string, 10);
-    oled_gotoxy(18, 2);
+    oled_gotoxy(18, 1);
     oled_puts(string);
-    
+    oled_gotoxy(19, 1);
+    oled_puts(" ");
+
     itoa(dht12.hum_int, string, 10);
-    oled_gotoxy(15, 3);
+    oled_gotoxy(15, 2);
     oled_puts(string);
     oled_puts(".");
 
     itoa(dht12.hum_dec, string, 10);
-    oled_gotoxy(18, 3);
+    oled_gotoxy(18, 2);
     oled_puts(string);
+    oled_gotoxy(19, 2);
+    oled_puts(" ");
     
 
     itoa(time_from_rtc[2], string, 10);
-    oled_gotoxy(6, 5);
+    oled_gotoxy(6, 4);
     if (time_from_rtc[2]<10){
         oled_puts("0");
     }
@@ -254,9 +278,11 @@ void update_vals_oled(void){//struct DHT_values_structure dht12
         oled_puts("0");
     }
     oled_puts(string);
+    oled_gotoxy(14, 4);
+    oled_puts(" ");
 
     itoa(time_from_rtc[3], string, 10);
-    oled_gotoxy(6, 6);
+    oled_gotoxy(6, 5);
     if (time_from_rtc[3]<10){
         oled_puts("0");
     }
@@ -327,22 +353,25 @@ void twi_test_devices(uint8_t address[], uint8_t n_devices){
 //uint16_t watering(uint16_t moist_value, uint8_t eep_log_done, uint16_t eep_addr){
 void watering(void){
     if(moist_value >= DRY) {
-        oled_gotoxy(9, 4);
+        oled_gotoxy(9, 3);
         oled_puts("aktivni     ");
         GPIO_write_high(&PORTD, RELE);
-        if(eep_log_done == 0){            
+        if(eep_log_done == 0){
+            GPIO_write_high(&PORTB, LED);            
             uint8_t data_w [4]= {time_from_rtc[3], time_from_rtc[4], time_from_rtc[2], time_from_rtc[1]};//{RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1)};
             //time_from_rtc[3,4,5]
-            //eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
+            eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
             eep_log_done = 1;
             //return (eep_addr =+ 4); 
             eep_addr =+ 4;
             }
         }else if(moist_value <= WET){
-            oled_gotoxy(9, 4);
+            oled_gotoxy(9, 3);
             oled_puts("neaktivni");
             GPIO_write_low(&PORTD, RELE);
             eep_log_done = 0;
+            //eep_addr =+ 4;
+            GPIO_write_low(&PORTB, LED); 
         }
     
 }
@@ -371,6 +400,7 @@ struct DHT_values_structure DHT_read(struct DHT_values_structure dht12){
 
 void data_read(void){
     char string [2];
+    uart_putc('\n');
     uart_puts("Výpis časů posledních zalití: ");
     uart_putc('\n');
     //data_r = eeprom_B_read(EEPROM_ADR, eep_addr); 
