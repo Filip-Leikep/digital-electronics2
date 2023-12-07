@@ -44,7 +44,8 @@ volatile uint8_t new_data = 0;
 volatile uint16_t eep_addr = 0;
 uint16_t moist_value;
 uint8_t eep_log_done = 0;
-uint8_t data_r [4];
+uint8_t data_r;
+uint8_t time_from_rtc [6] = {0,0,0,0,0,0};
 
 struct DHT_values_structure {
    uint8_t hum_int;
@@ -58,9 +59,10 @@ struct DHT_values_structure dht12;
 
 struct DHT_values_structure DHT_read(struct DHT_values_structure dht12);
 void display_text(void);
-void update_vals_oled(struct DHT_values_structure dht12);
-void update_vals_uart(struct DHT_values_structure dht12);
+void update_vals_oled();//struct DHT_values_structure dht12
+void update_vals_uart();//struct DHT_values_structure dht12
 void twi_test_devices(uint8_t address[], uint8_t n_devices);
+void data_read(void);
 //uint16_t watering(uint16_t moist_value, uint8_t eep_log_done, uint16_t eep_addr);
 void watering(void);
 
@@ -98,6 +100,7 @@ int main(void)
     // Test if devices on I2C are ready
     uint8_t addresses[N_I2C_DEVICES] = {SENSOR_ADR, RTC_ADR, EEPROM_ADR};
     twi_test_devices(addresses, N_I2C_DEVICES);
+    data_read();
 
 
     // Infinite loop
@@ -106,8 +109,14 @@ int main(void)
         if (new_data == 1) {
             moist_value = get_moisture();
             dht12 = DHT_read(dht12);
-            update_vals_uart(dht12);
-            update_vals_oled(dht12);
+            time_from_rtc[0] = RTC_now(RTC_ADR,0);
+            time_from_rtc[1] = RTC_now(RTC_ADR,1);
+            time_from_rtc[2] = RTC_now(RTC_ADR,2);
+            time_from_rtc[3] = RTC_now(RTC_ADR,4);
+            time_from_rtc[4] = RTC_now(RTC_ADR,5);
+            time_from_rtc[5] = RTC_now(RTC_ADR,6);
+            update_vals_uart();
+            update_vals_oled();
             watering();
             oled_display();
             
@@ -191,17 +200,21 @@ void display_text(void){
     oled_init(OLED_DISP_ON);
     oled_clrscr();
     oled_charMode(NORMALSIZE);
-    oled_puts("Meteostanice");
+    oled_puts("Zavlazovani");
     oled_gotoxy(0, 2);
     oled_puts("Teplota [°C]");
     oled_gotoxy(0, 3);
     oled_puts("Vlhkost RH[%]");
     oled_gotoxy(0, 4);
     oled_puts("Zalevani");
+    oled_gotoxy(0, 5);
+    oled_puts("Cas");
+    oled_gotoxy(0, 6);
+    oled_puts("Datum");
     oled_display();
 }
 
-void update_vals_oled(struct DHT_values_structure dht12){
+void update_vals_oled(void){//struct DHT_values_structure dht12
     char string[2];  // String for converting numbers by itoa()
     
     itoa(dht12.temp_int, string, 10);
@@ -221,11 +234,49 @@ void update_vals_oled(struct DHT_values_structure dht12){
     itoa(dht12.hum_dec, string, 10);
     oled_gotoxy(18, 3);
     oled_puts(string);
-    oled_gotoxy(9, 4);
+    
+
+    itoa(time_from_rtc[2], string, 10);
+    oled_gotoxy(6, 5);
+    if (time_from_rtc[2]<10){
+        oled_puts("0");
+    }
+    oled_puts(string);
+    oled_putc(':');
+    itoa(time_from_rtc[1], string, 10);
+    if (time_from_rtc[1]<10){
+        oled_puts("0");
+    }
+    oled_puts(string);
+    oled_putc(':');
+    itoa(time_from_rtc[0], string, 10);
+    if (time_from_rtc[0]<10){
+        oled_puts("0");
+    }
+    oled_puts(string);
+
+    itoa(time_from_rtc[3], string, 10);
+    oled_gotoxy(6, 6);
+    if (time_from_rtc[3]<10){
+        oled_puts("0");
+    }
+    oled_puts(string);
+    oled_puts(". ");
+    itoa(time_from_rtc[4], string, 10);
+    if (time_from_rtc[4]<10){
+        oled_puts("0");
+    }
+    oled_puts(string);
+    oled_puts(". ");
+    oled_puts("20");
+    itoa(time_from_rtc[5], string, 10);
+    oled_puts(string);
+    oled_display();
 }
 
-void update_vals_uart(struct DHT_values_structure dht12){
+void update_vals_uart(void){//struct DHT_values_structure dht12
     char string[2];  // String for converting numbers by itoa()
+    uart_putc('\n');
     itoa(dht12.temp_int, string, 10);
     uart_puts("T ");
     uart_puts(string);
@@ -243,8 +294,7 @@ void update_vals_uart(struct DHT_values_structure dht12){
     itoa(dht12.hum_dec, string, 10);
     uart_puts(string);
     uart_puts(" %\r\n");
-    uart_puts("\r\n");
-
+    
     itoa(moist_value, string, 10);
     uart_puts("Vlhkost pudy: ");
     uart_puts(string);
@@ -260,10 +310,11 @@ void update_vals_uart(struct DHT_values_structure dht12){
     itoa(RTC_now(RTC_ADR,0), string, 10);
     uart_puts(string);
     uart_puts("\r\n");
+    uart_puts("\r\n");
 }
 
 void twi_test_devices(uint8_t address[], uint8_t n_devices){
-    for(uint8_t i = 0; i < (n_devices - 1); i++){
+    for(uint8_t i = 0; i < (n_devices ); i++){
         if (twi_test_address(address[i]) == 0)
             uart_puts("I2C sensor detected\r\n");
         else {
@@ -276,16 +327,19 @@ void twi_test_devices(uint8_t address[], uint8_t n_devices){
 //uint16_t watering(uint16_t moist_value, uint8_t eep_log_done, uint16_t eep_addr){
 void watering(void){
     if(moist_value >= DRY) {
+        oled_gotoxy(9, 4);
         oled_puts("aktivni     ");
         GPIO_write_high(&PORTD, RELE);
         if(eep_log_done == 0){            
-            uint8_t data_w [4]= {RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1)};
+            uint8_t data_w [4]= {time_from_rtc[3], time_from_rtc[4], time_from_rtc[2], time_from_rtc[1]};//{RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1)};
+            //time_from_rtc[3,4,5]
             eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
             eep_log_done = 1;
             //return (eep_addr =+ 4); 
             eep_addr =+ 4;
             }
         }else if(moist_value <= WET){
+            oled_gotoxy(9, 4);
             oled_puts("neaktivni");
             GPIO_write_low(&PORTD, RELE);
             eep_log_done = 0;
@@ -314,3 +368,33 @@ struct DHT_values_structure DHT_read(struct DHT_values_structure dht12){
     return dht;
 }
 
+
+void data_read(void){
+    char string [2];
+    uart_puts("Výpis časů posledních zalití: ");
+    uart_putc('\n');
+    //data_r = eeprom_B_read(EEPROM_ADR, eep_addr); 
+    //itoa(data_r, string, 10);
+    //uart_puts(string);
+    //uart_puts(", ");   
+    for (uint16_t i = 0; i < 4096 ; i++)
+    {
+        data_r = eeprom_B_read(EEPROM_ADR, i);
+        if(data_r != 255){
+        //eep_addr =+ 1;
+        itoa(data_r, string, 10);
+        if(((i+1) % 4) != 0){
+            uart_puts(string);
+            uart_puts(", ");
+        }else{
+            uart_puts(string);
+            uart_putc('\n');
+        }
+        
+        }else{
+            return;
+        }
+    }
+    
+    //eep_addr = 0;
+}
