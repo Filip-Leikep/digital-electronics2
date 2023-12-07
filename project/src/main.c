@@ -271,7 +271,7 @@ void update_vals_oled(void){//struct DHT_values_structure dht12
     oled_puts("20");
     itoa(time_from_rtc[5], string, 10);
     oled_puts(string);
-    oled_display();
+    //oled_display();
 }
 
 void update_vals_uart(void){//struct DHT_values_structure dht12
@@ -301,13 +301,13 @@ void update_vals_uart(void){//struct DHT_values_structure dht12
     uart_putc('\n');
 
     uart_puts("Cas: ");
-    itoa(RTC_now(RTC_ADR,2), string, 10);
+    itoa(time_from_rtc[2], string, 10);
     uart_puts(string);
     uart_putc(':');
-    itoa(RTC_now(RTC_ADR,1), string, 10);
+    itoa(time_from_rtc[1], string, 10);
     uart_puts(string);
     uart_putc(':');
-    itoa(RTC_now(RTC_ADR,0), string, 10);
+    itoa(time_from_rtc[0], string, 10);
     uart_puts(string);
     uart_puts("\r\n");
     uart_puts("\r\n");
@@ -333,7 +333,7 @@ void watering(void){
         if(eep_log_done == 0){            
             uint8_t data_w [4]= {time_from_rtc[3], time_from_rtc[4], time_from_rtc[2], time_from_rtc[1]};//{RTC_now(RTC_ADR, 4), RTC_now(RTC_ADR, 5), RTC_now(RTC_ADR, 2), RTC_now(RTC_ADR, 1)};
             //time_from_rtc[3,4,5]
-            eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
+            //eeprom_P_write(EEPROM_ADR, eep_addr, data_w, 4);
             eep_log_done = 1;
             //return (eep_addr =+ 4); 
             eep_addr =+ 4;
