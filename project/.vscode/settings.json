@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "io.h": "c"
+        "io.h": "c",
+        "oled.h": "c",
+        "twi.h": "c"
     }
 }
