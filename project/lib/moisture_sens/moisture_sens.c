@@ -1,19 +1,37 @@
+/***********************************************************************
+ * 
+ * Capacitive moisture sensor library for AVR-GCC.
+ * 
+ * ATmega328P (Arduino Uno), 16 MHz, PlatformIO
+ *
+ *
+ **********************************************************************/
+
+
+/*=============INCLUDES==============*/
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "moisture_sens.h"
 
-volatile uint8_t new_sensor_data = 0;
+/*===========GLOBAL VARIABLES=========*/
+volatile uint8_t new_sensor_data = 0; /**< @brief Variabe for idicating that ad conversion has ended.*/
 
+/*============INTERRUPT SERVICE RUTINES=================*/
+/**********************************************************************
+ * Function: End of ad conversion interrupt
+ * Purpose:  Indicate that there is prepared new converted value
+ **********************************************************************/
 ISR(ADC_vect)
 {
-    new_sensor_data = 1;
+    new_sensor_data = 1; //inducete that ad conversion is done
 }
 
 /*************************************************************************
  * Function: moisture_sens_init()
- * Purpose:  set and prepare ADC to convert
+ * Purpose:  set and prepare ADC to convert on pin PC0 (ADC0)
  * Input:    none
  * Returns:  none
+ * Note:     Taken from: https://github.com/tomas-fryza/digital-electronics-2/tree/master/solutions/lab5-adc/src
  **************************************************************************/
 void moisture_sens_init(void){
 
@@ -32,24 +50,19 @@ void moisture_sens_init(void){
 
 /*************************************************************************
  * Function: get_moisture()
- * Purpose:  start a ADC concersion and returtn converted value
+ * Purpose:  start a ADC concersion on pin PC0 and returtn converted value
  * Input:    none
  * Returns:  16 bit unsigned integer converted value 
  **************************************************************************/
 
 unsigned short get_moisture(void){
-    
     uint16_t value;
-    // Start ADC conversion
-    ADCSRA = ADCSRA | (1<<ADSC);
-
+    ADCSRA = ADCSRA | (1<<ADSC); //Start ADC conversion
     if(new_sensor_data){
-        // Read converted value
-        // Note that, register pair ADCH and ADCL can be read as a 16-bit value ADC
-        value = ADC;
-        new_sensor_data = 0;
+        value = ADC; // Read converted value
+        new_sensor_data = 0;    
     }else{
         
     }
-   return value;    
+   return value; //return converted value    
 }
