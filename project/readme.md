@@ -21,8 +21,18 @@ All components except the capacitive soil moisture sensor are connected through 
 ## Software description
 
 All source files and library files are in
-[lib](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/lib), [src](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/src)  
+[lib](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/lib), [src](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/src):
+- [TWI library](lib/twi) (sourced from doc. T. Fryza - see twi.h header)
+- [UART library](lib/uart) (sourced from Peter Fleury - see uart.h header)
+- [OLED library](lib/oled) (sourced from Michael Köhler - see oled.h header)
+- [GPIO lobrary](lib/gpio)
+- [EEPROM I2C library](lib/eeprom_i2c)
+- [Moisture sensor library](lib/moisture_sens)
+- [RTC module library](lib/rtc)
+### Simplyfied flow chart of main:
 ![Device](images/Flowchart.png)  
+
+### Description of main:
 The process starts by initialiation of all I2C devices - temperature/humidity sensor, RTC, EEPROM and OLED. Also UART and ADC are initialized. Function displaytext puts static text on OLED. Values on OLED are updated every second, also they are put in UART.
 
 The main function starts by declaring helper variables for detecting button presses. Next, the I2C peripheral of the ATmega328P microcontroller is initialized (provided by the `twi_init()`) function and the current time and date are set in the RTC module, which communicates over I2C (`RTC_init()`). Next, the peripheral that takes care of communication over the serial monitor is prepared (`uart_init()`). For communication, the symbol rate is set to 115200 baud and the information message "START" is sent to the serial monitor. The AD converter is then set up to read the analog voltage, which is the output of the moisture sensor (provided by the `moisture_sens_init()`). For timing, timer 1 is set, which is pre-filled so that it overflows every second. In order to be able to track the overflow in real time, interrupts are enabled with the `sei()` command (interrupts are also used to read the moisture sensor). Next, the input/output pins are set so that a relay can be connected to them to start watering (on pin `PD2`), a control button to activate the output of stored watering times (pin `PD3`) for reading, internal pull-up resistors are set here, and an indicator LED indicating the state of the watering system (pin `PB5`).
