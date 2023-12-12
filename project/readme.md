@@ -20,14 +20,14 @@ All components except the capacitive soil moisture sensor are connected through 
 
 ## Software description
 
-Put flowchats of your algorithm(s) and direct links to source files in `src` or `lib` folders.
+All source files and library files are in
 [lib](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/lib), [src](https://github.com/Filip-Leikep/digital-electronics2/tree/main/project/src)  
 ![Device](images/Flowchart.png)  
-jgj
+The process starts by initialiation of all I2C devices - temperature/humidity sensor, RTC, EEPROM and OLED. Also UART and ADC are initialized. Function displaytext puts static text on OLED. Values on OLED are updated every second, also they are put in UART. 
 
 ## Instructions
 
-Write an instruction manual for your application, including photos and a link to a short app video.
+Connect 
 
 ## References
 
