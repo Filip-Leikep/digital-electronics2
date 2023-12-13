@@ -47,8 +47,9 @@ A condition is placed in the infinite loop that is always met when the new_data 
    
 To check data logger:
 1) Connect the Arduiono board to a PC
-2) Push the button connected to the `PD3` pin
-3) Open a software with UART serial monitor console where logged watering data will be displayed
+2) Open a software with UART serial monitor console 
+3) Push the button and the data will be displayed in the console
+
 
 ##Demonstration  
 [Short video demonstration of the project](https://www.youtube.com/watch?v=xZp-aYvs530&ab_channel=DanielGraf)
