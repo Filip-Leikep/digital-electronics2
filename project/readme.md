@@ -51,5 +51,5 @@ To check data logger:
 3) Push the button and the data will be displayed in the console
 
 
-##Demonstration  
+## Demonstration  
 [Short video demonstration of the project](https://www.youtube.com/watch?v=xZp-aYvs530&ab_channel=DanielGraf)
