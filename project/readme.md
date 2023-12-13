@@ -44,7 +44,8 @@ A condition is placed in the infinite loop that is always met when the new_data 
 1) Connect the Arduino board to a power supply
 2) Put the capacitive moisture sensor into the soil in a way where only the warning line will be above the surface
 3) Enjoy automative watering system with data logger
-   To check data logger:
+   
+To check data logger:
 1) Connect the Arduiono board to a PC
 2) Open a software with serial monitor console and observe stored data
 ## References
