@@ -50,5 +50,5 @@ To check data logger:
 2) Push the button connected to the `PD3` pin
 3) Open a software with UART serial monitor console where logged watering data will be displayed
 
-##Demonstration
+##Demonstration  
 [Short video demonstration of the project](https://www.youtube.com/watch?v=xZp-aYvs530&ab_channel=DanielGraf)
