@@ -54,5 +54,4 @@ To check data logger:
 ## Demonstration  
 [Short video demonstration of the project](https://www.youtube.com/watch?v=xZp-aYvs530&ab_channel=DanielGraf)
 
-[Short video demonstration of the project with data logger showcase](https://www.youtube.com/watch?v=xZp-aYvs530&ab_channel=DanielGraf)
 [Short video demonstration of the project with data logger showcase](https://youtu.be/L93e8-zRtyU)
